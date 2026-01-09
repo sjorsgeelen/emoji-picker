@@ -1,6 +1,7 @@
 use gtk4::prelude::*;
 use gtk4::{Application, ApplicationWindow, Grid, Label, Entry};
 use crate::emoji::search::search;
+use crate::emoji::emoji_data::PREFERRED_SKIN_TONE;
 use crate::emoji::emoji_data::EMOJIS;
 use crate::emoji::emoji_data::Emoji;
 use gtk4::{Stack, ScrolledWindow, Orientation, Button, Box as GtkBox};
@@ -86,9 +87,25 @@ impl EmojiWindow {
 
             let all_emojis: Vec<&Emoji> = EMOJIS.iter().filter(|e| e.category == category).collect();
             let loaded = 40;
-            // Initial load
+            // Initial load: show only preferred skin tone
             for (i, emoji) in all_emojis.iter().take(loaded).enumerate() {
-                let label = Label::new(Some(emoji.ch));
+                let skin_ch = unsafe {
+                    match (&emoji.skin_tone_variants, PREFERRED_SKIN_TONE) {
+                        (Some(variants), tone) if tone != crate::emoji::emoji_data::SkinTone::Default => {
+                            let idx = match tone {
+                                crate::emoji::emoji_data::SkinTone::Light => 0,
+                                crate::emoji::emoji_data::SkinTone::MediumLight => 1,
+                                crate::emoji::emoji_data::SkinTone::Medium => 2,
+                                crate::emoji::emoji_data::SkinTone::MediumDark => 3,
+                                crate::emoji::emoji_data::SkinTone::Dark => 4,
+                                _ => 0,
+                            };
+                            variants.get(idx).copied().unwrap_or(emoji.ch)
+                        }
+                        _ => emoji.ch,
+                    }
+                };
+                let label = Label::new(Some(skin_ch));
                 label.set_css_classes(&["emoji-label"]);
                 label.set_widget_name("emoji");
                 grid.attach(&label, (i % columns as usize) as i32, (i / columns as usize) as i32, 1, 1);
@@ -237,4 +254,3 @@ impl EmojiWindow {
         self.window.present();
     }
 }
-
