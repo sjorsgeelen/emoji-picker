@@ -1,6 +1,10 @@
 # emoji-picker
 An emoji picker for GNOME
 
+## Goal
+
+I want to build a fast emoji-picker for GNOME.
+
 ## repo structure
 
 ```

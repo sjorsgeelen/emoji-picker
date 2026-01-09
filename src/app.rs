@@ -1,6 +1,6 @@
 use gtk4::prelude::*;
-use libadwaita::prelude::*;
-use libadwaita::Application;
+// ...existing code...
+use gtk4::Application;
 
 use crate::ui::window::EmojiWindow;
 
