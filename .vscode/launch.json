@@ -1,0 +1,19 @@
+{
+    // Use this configuration to launch the app via run.sh
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Emoji Picker",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/target/debug/emoji-picker",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal",
+            "env": {
+                "RUST_LOG": "debug",
+                "NO_AT_BRIDGE": "1"
+            }
+        }
+    ]
+}

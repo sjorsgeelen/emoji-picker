@@ -5,6 +5,9 @@ use gtk4::Application;
 use crate::ui::window::EmojiWindow;
 
 pub fn run() {
+    // Initialize logging
+    env_logger::init();
+
     let app = Application::builder()
         .application_id("dev.sjors.EmojiPicker")
         .build();

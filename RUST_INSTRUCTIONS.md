@@ -1,0 +1,59 @@
+# Rust Project Best Practices
+
+## 1. Code Style and Formatting
+- Use `rustfmt` to automatically format code. Run `cargo fmt` before committing.
+- Follow Rust naming conventions: snake_case for variables/functions, CamelCase for types/structs/enums.
+- Keep lines under 100 characters when possible.
+
+## 2. Error Handling
+- Prefer `Result<T, E>` for recoverable errors and `panic!` only for unrecoverable situations.
+- Use the `?` operator for error propagation.
+- Define custom error types when needed, and implement `std::error::Error`.
+
+## 3. Project Structure
+- Organize code into modules (`mod`) and submodules for clarity.
+- Use Rust's standard module conventions:
+	- For a module with only one file, use `<module>.rs` (e.g., `app.rs`, `clipboard.rs`).
+	- For a module with multiple related files, use a folder with a `mod.rs` file inside (e.g., `ui/mod.rs`), and place submodules in separate files within that folder (e.g., `ui/category_bar.rs`).
+	- Do not use both `<foldername>.rs` and `mod.rs` in the same folder to avoid ambiguity.
+	- Example:
+		- `src/ui/mod.rs` (entry point for the `ui` module)
+		- `src/ui/category_bar.rs`, `src/ui/emoji_grid.rs`, etc. (submodules)
+		- No `src/ui.rs` if `src/ui/mod.rs` exists.
+	- If you split a module into a folder, use `mod.rs` inside that folder and move related code into submodules.
+- Place binaries in `src/bin/` if the project has multiple entry points.
+- Keep main logic out of `main.rs`; use it to call library code from `lib.rs` or other modules.
+
+## 4. Dependency Management
+- Use the latest stable versions of dependencies unless a specific version is required.
+- Regularly run `cargo update` to keep dependencies up to date.
+- Avoid unnecessary dependencies to reduce compile times and binary size.
+
+## 5. Testing
+- Write unit tests in the same file as the code, inside a `#[cfg(test)]` module.
+- Use integration tests in the `tests/` directory for end-to-end scenarios.
+- Run `cargo test` before pushing changes.
+
+## 6. Documentation
+- Document all public items with `///` doc comments.
+- Provide examples in documentation where helpful.
+- Generate docs with `cargo doc --open` to review.
+
+## 7. Version Control
+- Commit early and often with clear, descriptive messages.
+- Do not commit generated files or build artifacts.
+- Use `.gitignore` to exclude target/, .DS_Store, and other non-source files.
+
+## 8. Continuous Integration
+- Set up CI to run `cargo fmt --check`, `cargo clippy`, and `cargo test` on every PR.
+
+## 9. Linting
+- Use `cargo clippy` to catch common mistakes and improve code quality.
+- Address all warnings unless there is a strong reason not to (document exceptions).
+
+## 10. Security
+- Run `cargo audit` regularly to check for vulnerable dependencies.
+
+---
+
+Feel free to expand this file with project-specific rules or additional sections as needed.

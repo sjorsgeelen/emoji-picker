@@ -91,7 +91,7 @@ fn main() {
             let ch: String = codepoints.iter().filter_map(|&c| char::from_u32(c)).collect();
             let name_en = line.split('#').nth(1).unwrap().split_whitespace().skip(1).collect::<Vec<_>>().join(" ");
             // CLDR lookups
-            let (name_en_cldr, keywords_en) = cldr_en.get(&ch).cloned().unwrap_or((name_en.clone(), vec![]));
+            let (_name_en_cldr, keywords_en) = cldr_en.get(&ch).cloned().unwrap_or((name_en.clone(), vec![]));
             let (name_nl, keywords_nl) = cldr_nl.get(&ch).cloned().unwrap_or((name_en.clone(), vec![]));
 
             // Detect if this is a skin tone variant
