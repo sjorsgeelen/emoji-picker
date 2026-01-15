@@ -6,14 +6,14 @@ use crate::ui::style;
 use crate::ui::category_bar::CategoryBar;
 use crate::ui::emoji_grid::EmojiGrid;
 use gtk4::Stack;
-use log::{info, debug};
+use log::debug;
 
 pub struct EmojiWindow {
     window: ApplicationWindow,
 }
 
 impl EmojiWindow {
-    pub fn new(app: &Application) -> Self {
+    pub fn new(app: &Application, start_time: std::time::Instant) -> Self {
     // Use constants
     let grid_rows = ROWS;
     let grid_columns = COLUMNS;
@@ -96,6 +96,10 @@ impl EmojiWindow {
     debug!("Stack size: width={} height={}", stack.width(), stack.height());
 
     window.show();
+
+    // Log startup time
+    let elapsed = start_time.elapsed();
+    log::info!("Startup time: {:.2?}", elapsed);
     Self { window }
 }
 pub fn present(&self) {
