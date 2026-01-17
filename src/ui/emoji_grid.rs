@@ -27,14 +27,16 @@ impl EmojiGrid {
             .min_children_per_line(COLUMNS as u32)
             .max_children_per_line(COLUMNS as u32)
             .selection_mode(gtk4::SelectionMode::None)
+            .halign(gtk4::Align::Start)
+            .valign(gtk4::Align::Start)
             .build();
         let emoji_labels = Rc::new(RefCell::new(Vec::new()));
         for emoji in emojis.iter() {
             let label = EmojiLabel::new(emoji.ch);
             label.set_widget_name("emoji");
             label.add_css_class("emoji-label");
-            label.set_halign(gtk4::Align::Center);
-            label.set_valign(gtk4::Align::Center);
+            label.set_halign(gtk4::Align::Fill);
+            label.set_valign(gtk4::Align::Start);
             // Set dynamic size properties
             label.set_width_request(grid_width / COLUMNS);
             label.set_height_request(grid_height / crate::ui::constants::ROWS);
