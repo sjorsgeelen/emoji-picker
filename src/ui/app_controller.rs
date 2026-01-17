@@ -98,7 +98,6 @@ impl EmojiPickerController {
 #[cfg(test)]
 #[test]
 fn test_show_category_bar_logic() {
-    use super::*;
     let emojis = vec![crate::emoji::emoji_data::Emoji {
         ch: "😀",
         name_en: "grinning face",

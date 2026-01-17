@@ -167,7 +167,7 @@ fn main() {
             };
 
             let (_name_en_cldr, mut keywords_en) = lookup_with_fallback(&cldr_en_main, &cldr_en_derived, &codepoint_key, &name_en);
-            let (mut name_nl, mut keywords_nl) = lookup_with_fallback(&cldr_nl_main, &cldr_nl_derived, &codepoint_key, &name_en);
+            let (name_nl, mut keywords_nl) = lookup_with_fallback(&cldr_nl_main, &cldr_nl_derived, &codepoint_key, &name_en);
 
             // Detect if this is a skin tone variant
             let mut is_skin_tone = false;
@@ -193,7 +193,7 @@ fn main() {
             } else {
                 // Fallback: if keywords_en is empty, try to get from lightest skin tone variant
                 if keywords_en.is_empty() {
-                    for (i, (mod_cp, _)) in skin_tone_mods.iter().enumerate() {
+                    for (mod_cp, _) in skin_tone_mods.iter() {
                         let mut skin_codepoints = codepoints.clone();
                         skin_codepoints.push(u32::from_str_radix(mod_cp, 16).unwrap());
                         let skin_key = skin_codepoints.iter().map(|c| format!("{:X}", c)).collect::<Vec<_>>().join(" ");
@@ -205,7 +205,7 @@ fn main() {
                     }
                 }
                 if keywords_nl.is_empty() {
-                    for (i, (mod_cp, _)) in skin_tone_mods.iter().enumerate() {
+                    for (mod_cp, _) in skin_tone_mods.iter() {
                         let mut skin_codepoints = codepoints.clone();
                         skin_codepoints.push(u32::from_str_radix(mod_cp, 16).unwrap());
                         let skin_key = skin_codepoints.iter().map(|c| format!("{:X}", c)).collect::<Vec<_>>().join(" ");

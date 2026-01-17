@@ -19,6 +19,7 @@ pub struct CategoryBar {
     pub selected_index: Rc<RefCell<Option<usize>>>,
     pub buttons: Rc<RefCell<Vec<Button>>>,
     pub on_category_selected: Rc<RefCell<Option<Box<dyn Fn(usize) + 'static>>>>,
+    pub on_focus_emoji_grid: Rc<RefCell<Option<Box<dyn Fn()>>>>,
 }
 
 impl CategoryBar {
@@ -59,18 +60,19 @@ impl CategoryBar {
         }
         let selected_index = Rc::new(RefCell::new(None));
         let on_category_selected = Rc::new(RefCell::new(None));
+        let on_focus_emoji_grid = Rc::new(RefCell::new(None));
         let category_bar = Self {
             button_bar,
             selected_index: selected_index.clone(),
             buttons: buttons.clone(),
             on_category_selected: on_category_selected.clone(),
+            on_focus_emoji_grid: on_focus_emoji_grid.clone(),
         };
 
         let controller = gtk4::EventControllerKey::new();
         let selected_index_clone = selected_index.clone();
         let buttons_clone = buttons.clone();
-        // Focus transfer callback (to be set by window.rs)
-        let focus_emoji_grid: Option<Box<dyn Fn()>> = None;
+        let on_focus_emoji_grid_cb = on_focus_emoji_grid.clone();
         controller.connect_key_pressed(move |_, keyval, _, _| {
             let total = buttons_clone.borrow().len();
             let mut selected = selected_index_clone.borrow().unwrap_or(0);
@@ -93,7 +95,7 @@ impl CategoryBar {
                 }
                 gdk::Key::Tab => {
                     // Move focus to emoji grid
-                    if let Some(ref cb) = focus_emoji_grid {
+                    if let Some(ref cb) = &*on_focus_emoji_grid_cb.borrow() {
                         cb();
                         return Propagation::Stop;
                     }
@@ -112,11 +114,9 @@ impl CategoryBar {
             Propagation::Proceed
         });
         category_bar.button_bar.add_controller(controller);
-
-        let on_category_selected_cb = on_category_selected.clone();
         for (i, button) in buttons.borrow().iter().enumerate() {
             let idx = i;
-            let on_category_selected_cb = on_category_selected_cb.clone();
+            let on_category_selected_cb = on_category_selected.clone();
             button.connect_clicked(move |_| {
                 if let Some(ref cb) = *on_category_selected_cb.borrow() {
                     cb(idx);
@@ -126,6 +126,7 @@ impl CategoryBar {
 
         category_bar
     }
+
     /// Register a callback to be called when a category is selected (button clicked).
     pub fn set_on_category_selected<F: Fn(usize) + 'static>(&mut self, callback: F) {
         *self.on_category_selected.borrow_mut() = Some(Box::new(callback));

@@ -1,4 +1,5 @@
 use gtk4::gdk::Display;
+use gtk4::gdk::prelude::*;
 
 pub fn copy(text: &str) {
     let display = Display::default().unwrap();

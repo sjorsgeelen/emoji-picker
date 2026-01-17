@@ -1,6 +1,7 @@
+use crate::clipboard;
 use crate::ui::emoji_label::EmojiLabel;
 use gtk4::prelude::*;
-use gtk4::{FlowBox, ScrolledWindow};
+use gtk4::{FlowBox, ScrolledWindow, GestureClick};
 use crate::ui::constants::{SPACING, COLUMNS};
 use std::rc::Rc;
 use std::cell::RefCell;
@@ -31,16 +32,29 @@ impl EmojiGrid {
             .valign(gtk4::Align::Start)
             .build();
         let emoji_labels = Rc::new(RefCell::new(Vec::new()));
-        for emoji in emojis.iter() {
+        for (_, emoji) in emojis.iter().enumerate() {
             let label = EmojiLabel::new(emoji.ch);
             label.set_widget_name("emoji");
             label.add_css_class("emoji-label");
             label.set_halign(gtk4::Align::Fill);
             label.set_valign(gtk4::Align::Start);
-            // Set dynamic size properties
             label.set_width_request(grid_width / COLUMNS);
             label.set_height_request(grid_height / crate::ui::constants::ROWS);
-            // Note: gtk4::Label does not have set_font_size, so use Pango attributes if needed for font size
+            // Copy to clipboard and visual feedback on click
+            {
+                let emoji = emoji.ch.to_string();
+                let label_clone = label.clone();
+                let gesture = GestureClick::new();
+                gesture.connect_pressed(move |_, _, _, _| {
+                    clipboard::copy(&emoji);
+                    label_clone.add_css_class("copied-emoji");
+                    let label_inner = label_clone.clone();
+                    gtk4::glib::timeout_add_local_once(std::time::Duration::from_millis(500), move || {
+                        label_inner.remove_css_class("copied-emoji");
+                    });
+                });
+                label.add_controller(gesture);
+            }
             flowbox.insert(&label, -1);
             emoji_labels.borrow_mut().push(label);
         }
@@ -59,6 +73,14 @@ impl EmojiGrid {
         scrolled.set_size_request(grid_width, grid_height);
 
         let selected_index = Rc::new(RefCell::new(None));
+        // Select the first emoji by default if any exist
+        if !emoji_labels.borrow().is_empty() {
+            *selected_index.borrow_mut() = Some(0);
+            // Add visual selection
+            if let Some(label) = emoji_labels.borrow().get(0) {
+                label.add_css_class("selected-emoji");
+            }
+        }
         let on_emoji_selected = Rc::new(RefCell::new(None));
         let emoji_grid = Self {
             scrolled,
@@ -75,10 +97,14 @@ impl EmojiGrid {
         let emoji_labels_clone = emoji_labels.clone();
         let total_emojis = emoji_labels.borrow().len();
         // Focus transfer callback (to be set by window.rs)
-        let focus_category_bar: Option<Box<dyn Fn()>> = None;
+        let focus_category_bar: Rc<RefCell<Option<Box<dyn Fn()>>>> = Rc::new(RefCell::new(None));
         let on_emoji_selected_cb = on_emoji_selected.clone();
         controller.connect_key_pressed(move |_, keyval, _, _| {
+            // Always have a valid selection
             let mut selected = selected_index_clone.borrow().unwrap_or(0);
+            if total_emojis == 0 {
+                return Propagation::Proceed;
+            }
             match keyval {
                 gdk::Key::Right => {
                     if selected + 1 < total_emojis {
@@ -101,14 +127,23 @@ impl EmojiGrid {
                     }
                 }
                 gdk::Key::Return => {
-                    // Handle emoji selection (emit signal or callback)
+                    // Copy selected emoji to clipboard and show feedback
+                    if let Some(label) = emoji_labels_clone.borrow().get(selected) {
+                        let emoji = label.text().to_string();
+                        clipboard::copy(&emoji);
+                        label.add_css_class("copied-emoji");
+                        let label_clone = label.clone();
+                        gtk4::glib::timeout_add_local_once(std::time::Duration::from_millis(500), move || {
+                            label_clone.remove_css_class("copied-emoji");
+                        });
+                    }
+                    // Also call any registered callback
                     if let Some(ref cb) = *on_emoji_selected_cb.borrow() {
                         cb(selected);
                     }
                 }
                 gdk::Key::Tab if keyval == gdk::Key::ISO_Left_Tab => {
-                    // Move focus to category bar (Shift+Tab)
-                    if let Some(ref cb) = focus_category_bar {
+                    if let Some(ref cb) = &*focus_category_bar.borrow() {
                         cb();
                         return Propagation::Stop;
                     }
@@ -116,7 +151,6 @@ impl EmojiGrid {
                 _ => {}
             }
             *selected_index_clone.borrow_mut() = Some(selected);
-            // Update visual selection (e.g., CSS class)
             for (i, label) in emoji_labels_clone.borrow().iter().enumerate() {
                 if i == selected {
                     label.add_css_class("selected-emoji");
@@ -127,8 +161,10 @@ impl EmojiGrid {
             Propagation::Proceed
         });
         emoji_grid.flowbox.add_controller(controller);
+        // Store focus transfer callback for later wiring (handled by setter)
         emoji_grid
     }
+
 
     /// Register a callback to be called when an emoji is selected (e.g. via Return key).
     pub fn set_on_emoji_selected<F: Fn(usize) + 'static>(&mut self, callback: F) {

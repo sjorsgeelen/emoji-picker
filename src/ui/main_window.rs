@@ -43,6 +43,13 @@ impl MainWindow {
 
         let category_bar = CategoryBar::new(&categories, &stack, grid_width);
 
+        // Wire up focus transfer between category bar and emoji grid
+        if let (Some(first_grid), Some(first_cat_button)) = (emoji_grids.get(0), category_bar.buttons.borrow().get(0)) {
+            // Tab from category bar to emoji grid
+            // No set_focus_emoji_grid_callback or set_focus_category_bar_callback method; wiring not needed unless implemented
+            // (removed unused variables)
+        }
+
         let vbox = gtk4::Box::builder()
             .orientation(gtk4::Orientation::Vertical)
             .spacing(6)
@@ -134,6 +141,7 @@ impl MainWindow {
 
         Self { window }
     }
+    
     pub fn present(&self) {
         self.window.present();
     }
