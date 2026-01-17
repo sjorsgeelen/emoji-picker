@@ -1,30 +1,43 @@
 use gtk4::prelude::*;
-use gtk4::{Grid, ScrolledWindow};
+use gtk4::{FlowBox, ScrolledWindow};
+use crate::ui::constants::{SPACING, COLUMNS};
+use std::rc::Rc;
+use std::cell::RefCell;
+use gtk4::glib::signal::Propagation;
 use crate::emoji::emoji_data::Emoji;
 
 pub struct EmojiGrid {
     pub scrolled: ScrolledWindow,
-    pub grid: Grid,
+    pub flowbox: FlowBox,
+    pub selected_index: Rc<RefCell<Option<usize>>>,
+    pub emoji_labels: Rc<RefCell<Vec<gtk4::Label>>>,
 }
 
 impl EmojiGrid {
-    pub fn new(emojis: &[&Emoji], columns: i32, emoji_size: i32, spacing: i32, grid_width: i32, grid_height: i32) -> Self {
-        let grid = Grid::builder()
-            .row_spacing(spacing)
-            .column_spacing(spacing)
+    pub fn new(emojis: &[&Emoji], grid_width: i32, grid_height: i32) -> Self {
+        let flowbox = FlowBox::builder()
+            .row_spacing(SPACING as u32)
+            .column_spacing(SPACING as u32)
             .margin_top(0)
             .margin_bottom(0)
             .margin_start(0)
             .margin_end(0)
+            .min_children_per_line(COLUMNS as u32)
+            .max_children_per_line(COLUMNS as u32)
+            .selection_mode(gtk4::SelectionMode::None)
             .build();
-        for (i, emoji) in emojis.iter().enumerate() {
+        let emoji_labels = Rc::new(RefCell::new(Vec::new()));
+        for emoji in emojis.iter() {
             let label = gtk4::Label::new(Some(emoji.ch));
-            label.set_css_classes(&["emoji-label"]);
             label.set_widget_name("emoji");
-            grid.attach(&label, (i % columns as usize) as i32, (i / columns as usize) as i32, 1, 1);
+            label.add_css_class("emoji-label");
+            label.set_halign(gtk4::Align::Center);
+            label.set_valign(gtk4::Align::Center);
+            flowbox.insert(&label, -1);
+            emoji_labels.borrow_mut().push(label);
         }
         let scrolled = ScrolledWindow::builder()
-            .child(&grid)
+            .child(&flowbox)
             .min_content_height(grid_height)
             .max_content_height(grid_height)
             .min_content_width(grid_width)
@@ -36,6 +49,70 @@ impl EmojiGrid {
             .margin_end(0)
             .build();
         scrolled.set_size_request(grid_width, grid_height);
-        Self { scrolled, grid }
+
+        let selected_index = Rc::new(RefCell::new(None));
+        let emoji_grid = Self {
+            scrolled,
+            flowbox,
+            selected_index: selected_index.clone(),
+            emoji_labels: emoji_labels.clone(),
+        };
+
+        // Keyboard navigation
+        use gtk4::gdk;
+        let controller = gtk4::EventControllerKey::new();
+        let selected_index_clone = selected_index.clone();
+        let emoji_labels_clone = emoji_labels.clone();
+        let total_emojis = emoji_labels.borrow().len();
+        // Focus transfer callback (to be set by window.rs)
+        let mut focus_category_bar: Option<Box<dyn Fn()>> = None;
+        controller.connect_key_pressed(move |_, keyval, _, _| {
+            let mut selected = selected_index_clone.borrow().unwrap_or(0);
+            match keyval {
+                gdk::Key::Right => {
+                    if selected + 1 < total_emojis {
+                        selected += 1;
+                    }
+                }
+                gdk::Key::Left => {
+                    if selected > 0 {
+                        selected -= 1;
+                    }
+                }
+                gdk::Key::Down => {
+                    if selected + (COLUMNS as usize) < total_emojis {
+                        selected += COLUMNS as usize;
+                    }
+                }
+                gdk::Key::Up => {
+                    if selected >= COLUMNS as usize {
+                        selected -= COLUMNS as usize;
+                    }
+                }
+                gdk::Key::Return => {
+                    // Handle emoji selection (emit signal or callback)
+                }
+                gdk::Key::Tab if keyval == gdk::Key::ISO_Left_Tab => {
+                    // Move focus to category bar (Shift+Tab)
+                    if let Some(ref cb) = focus_category_bar {
+                        cb();
+                        return Propagation::Stop;
+                    }
+                }
+                _ => {}
+            }
+            *selected_index_clone.borrow_mut() = Some(selected);
+            // Update visual selection (e.g., CSS class)
+            for (i, label) in emoji_labels_clone.borrow().iter().enumerate() {
+                if i == selected {
+                    label.add_css_class("selected-emoji");
+                } else {
+                    label.remove_css_class("selected-emoji");
+                }
+            }
+            Propagation::Proceed
+        });
+        emoji_grid.flowbox.add_controller(controller);
+        emoji_grid
     }
 }

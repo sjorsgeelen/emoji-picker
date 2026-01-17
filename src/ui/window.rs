@@ -36,14 +36,35 @@ impl EmojiWindow {
     let stack = Stack::new();
 
     // Add emoji grids to stack
+    // Store emoji grids for focus transfer wiring
+    let mut emoji_grids = Vec::new();
     for &category in categories.iter() {
         let all_emojis: Vec<_> = EMOJIS.iter().filter(|e| e.category == category).collect();
-        let emoji_grid = EmojiGrid::new(&all_emojis, grid_columns, emoji_size, spacing, grid_width, grid_height);
+        let emoji_grid = EmojiGrid::new(&all_emojis, grid_width, grid_height);
         stack.add_named(&emoji_grid.scrolled, Some(category));
+        emoji_grids.push(emoji_grid);
     }
 
     // Category bar
     let category_bar = CategoryBar::new(&categories, &stack, grid_width);
+
+    // Wire up focus transfer between category bar and emoji grid
+    // Assume first emoji grid is the default
+    if let Some(first_grid) = emoji_grids.first() {
+        // Tab from category bar moves focus to emoji grid
+        let emoji_flowbox = first_grid.flowbox.clone();
+        let focus_emoji_grid = move || {
+            emoji_flowbox.grab_focus();
+        };
+        // Shift+Tab from emoji grid moves focus to category bar
+        let cat_bar_widget = category_bar.button_bar.clone();
+        let focus_category_bar = move || {
+            cat_bar_widget.grab_focus();
+        };
+        // TODO: Actually set these callbacks in the components if exposed
+        // This requires exposing a setter or callback registration in both structs
+        // For now, just call grab_focus on Tab/Shift+Tab manually if needed
+    }
 
     // Layout: category_box (bar + scrollbar), stack
     let vbox = gtk4::Box::builder()

@@ -1,5 +1,9 @@
 use gtk4::prelude::*;
 use gtk4::{Box as GtkBox, Orientation, Button, Label, Align};
+use std::rc::Rc;
+use std::cell::RefCell;
+use gtk4::glib::signal::Propagation;
+use gtk4::gdk;
 /// Represents the category selection bar in the emoji picker UI.
 ///
 /// Contains the emoji tab buttons as a horizontal box.
@@ -11,6 +15,8 @@ use gtk4::{Box as GtkBox, Orientation, Button, Label, Align};
 pub struct CategoryBar {
     /// The horizontal box containing the emoji tab buttons.
     pub button_bar: GtkBox,
+    pub selected_index: Rc<RefCell<Option<usize>>>,
+    pub buttons: Rc<RefCell<Vec<Button>>>,
 }
 
 impl CategoryBar {
@@ -30,6 +36,7 @@ impl CategoryBar {
             .halign(Align::Start)
             .build();
         use crate::emoji::emoji_data::EMOJIS;
+        let buttons = Rc::new(RefCell::new(Vec::new()));
         for &category in categories.iter() {
             // Find the first emoji in this category
             let tab_emoji = EMOJIS.iter().find(|e| e.category == category).map(|e| e.ch).unwrap_or("?");
@@ -42,7 +49,61 @@ impl CategoryBar {
                 stack_clone.set_visible_child_name(&cat_name);
             });
             button_bar.append(&button);
+            buttons.borrow_mut().push(button);
         }
-        Self { button_bar }
+        let selected_index = Rc::new(RefCell::new(None));
+        let category_bar = Self {
+            button_bar,
+            selected_index: selected_index.clone(),
+            buttons: buttons.clone(),
+        };
+
+        let controller = gtk4::EventControllerKey::new();
+        let selected_index_clone = selected_index.clone();
+        let buttons_clone = buttons.clone();
+        // Focus transfer callback (to be set by window.rs)
+        let mut focus_emoji_grid: Option<Box<dyn Fn()>> = None;
+        controller.connect_key_pressed(move |_, keyval, _, _| {
+            let total = buttons_clone.borrow().len();
+            let mut selected = selected_index_clone.borrow().unwrap_or(0);
+            match keyval {
+                gdk::Key::Right => {
+                    if selected + 1 < total {
+                        selected += 1;
+                    }
+                }
+                gdk::Key::Left => {
+                    if selected > 0 {
+                        selected -= 1;
+                    }
+                }
+                gdk::Key::Return => {
+                    // Activate category
+                    if let Some(button) = buttons_clone.borrow().get(selected) {
+                        button.emit_clicked();
+                    }
+                }
+                gdk::Key::Tab => {
+                    // Move focus to emoji grid
+                    if let Some(ref cb) = focus_emoji_grid {
+                        cb();
+                        return Propagation::Stop;
+                    }
+                }
+                _ => {}
+            }
+            *selected_index_clone.borrow_mut() = Some(selected);
+            // Update visual selection (e.g., CSS class)
+            for (i, button) in buttons_clone.borrow().iter().enumerate() {
+                if i == selected {
+                    button.add_css_class("selected-category");
+                } else {
+                    button.remove_css_class("selected-category");
+                }
+            }
+            Propagation::Proceed
+        });
+        category_bar.button_bar.add_controller(controller);
+        category_bar
     }
 }
