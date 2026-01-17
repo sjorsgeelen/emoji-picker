@@ -8,3 +8,9 @@
 .tab-emoji {
     /* font-size, min-width, min-height set in Rust */
 }
+
+.copied-emoji {
+    background-color: #b9f6ca;
+    transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 8px;
+}
