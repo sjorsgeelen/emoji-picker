@@ -119,6 +119,22 @@ fn test_show_category_bar_logic() {
     assert!(controller.show_category_bar());
 }
 mod tests {
+        #[test]
+        fn test_listener_callback_receives_correct_state() {
+            use std::cell::RefCell;
+            use std::rc::Rc;
+            let mut controller = make_controller();
+            let called = Rc::new(RefCell::new(false));
+            let called_clone = Rc::clone(&called);
+            controller.add_listener(move |mode, emojis| {
+                *called_clone.borrow_mut() = true;
+                // Should be in Search mode and filtered_emojis should match query
+                assert_eq!(mode, PickerMode::Search);
+                assert!(emojis.iter().all(|e| e.name_en.contains("joy") || e.keywords_en.iter().any(|k| k.contains("joy"))));
+            });
+            controller.handle_search("joy");
+            assert!(*called.borrow(), "Listener callback was not called");
+        }
     use super::*;
     use crate::emoji::emoji_data::EMOJIS;
 

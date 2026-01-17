@@ -12,9 +12,10 @@ fn parse_cldr_keywords(path: &str) -> HashMap<String, (String, Vec<String>)> {
     reader.trim_text(true);
     let mut buf = Vec::new();
     let mut cp = String::new();
-    let mut tts = None;
-    let mut keywords = None;
+    let mut tts: Option<String> = None;
+    let mut keywords: Option<Vec<String>> = None;
 
+    let mut in_tts = false;
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref e)) if e.name().as_ref() == b"annotation" => {
@@ -23,32 +24,57 @@ fn parse_cldr_keywords(path: &str) -> HashMap<String, (String, Vec<String>)> {
                     .find(|a| a.key.as_ref() == b"cp")
                     .and_then(|a| String::from_utf8(a.value.into_owned()).ok())
                     .unwrap_or_default();
-                tts = None;
-                keywords = None;
+                // Use raw cp attribute value, split by codepoint, join as space-separated uppercase hex
+                // This matches emoji-test.txt format exactly
+                let cp_codepoints = cp
+                    .chars()
+                    .map(|c| format!("{:X}", c as u32))
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                cp = cp_codepoints;
+                in_tts = false;
                 for a in e.attributes().filter_map(|a| a.ok()) {
                     if a.key.as_ref() == b"type" && a.value.as_ref() == b"tts" {
-                        tts = Some(String::new());
+                        in_tts = true;
+                        break;
                     }
                 }
             }
             Ok(Event::Text(e)) => {
-                if tts.is_some() {
-                    tts = Some(e.unescape().unwrap().to_string());
-                } else if !cp.is_empty() {
-                    keywords = Some(
-                        e.unescape().unwrap().split('|').map(|s| s.trim().to_string()).collect::<Vec<String>>()
-                    );
+                if !cp.is_empty() {
+                    if in_tts {
+                        tts = Some(e.unescape().unwrap().to_string());
+                    } else {
+                        // Split on | or ; or comma, as CLDR sometimes uses ; or comma for keywords
+                        let text = e.unescape().unwrap();
+                        let kws = text
+                            .split(|c| c == '|' || c == ';' || c == ',')
+                            .map(|s| s.trim().to_string())
+                            .filter(|s| !s.is_empty())
+                            .collect::<Vec<String>>();
+                        keywords = Some(kws);
+                    }
                 }
             }
             Ok(Event::End(ref e)) if e.name().as_ref() == b"annotation" => {
                 if !cp.is_empty() {
-                    let name = tts.clone().unwrap_or_default();
-                    let kw = keywords.clone().unwrap_or_default();
-                    map.insert(cp.clone(), (name, kw));
+                    let entry = map.entry(cp.clone()).or_insert((String::new(), Vec::new()));
+                    if in_tts {
+                        // Set tts (name)
+                        if let Some(ref t) = tts {
+                            entry.0 = t.clone();
+                        }
+                    } else {
+                        // Set keywords
+                        if let Some(ref kw) = keywords {
+                            entry.1 = kw.clone();
+                        }
+                    }
                 }
                 cp.clear();
                 tts = None;
                 keywords = None;
+                in_tts = false;
             }
             Ok(Event::Eof) => break,
             _ => {}
@@ -60,12 +86,41 @@ fn parse_cldr_keywords(path: &str) -> HashMap<String, (String, Vec<String>)> {
 
 fn main() {
 
-    // Read emoji-test.txt
-    let emoji_test = fs::read_to_string("data/emoji-test.txt").expect("Download emoji-test.txt first!");
+    // Read emoji-test.txt from the new location
+    let emoji_test = fs::read_to_string("data/downloaded/emoji-test.txt").expect("Download emoji-test.txt first!");
 
-    // Parse CLDR for English and Dutch
-    let cldr_en = parse_cldr_keywords("data/en.xml");
-    let cldr_nl = parse_cldr_keywords("data/nl.xml");
+
+    // Parse CLDR for English and Dutch from both annotation sources
+    let cldr_en_main = parse_cldr_keywords("data/downloaded/common/annotations/en.xml");
+    let cldr_en_derived = parse_cldr_keywords("data/downloaded/common/annotationsDerived/en.xml");
+    let cldr_nl_main = parse_cldr_keywords("data/downloaded/common/annotations/nl.xml");
+    let cldr_nl_derived = parse_cldr_keywords("data/downloaded/common/annotationsDerived/nl.xml");
+
+    // Helper to merge tts and keywords from both sources
+    fn merge_cldr(
+        main: &HashMap<String, (String, Vec<String>)>,
+        derived: &HashMap<String, (String, Vec<String>)>,
+        key: &str,
+        default_name: &str,
+    ) -> (String, Vec<String>) {
+        let (tts_main, kw_main) = main.get(key).cloned().unwrap_or((String::new(), vec![]));
+        let (tts_derived, kw_derived) = derived.get(key).cloned().unwrap_or((String::new(), vec![]));
+        let mut keywords = kw_main;
+        for k in kw_derived {
+            if !keywords.contains(&k) {
+                keywords.push(k);
+            }
+        }
+        let tts = if !tts_main.is_empty() {
+            tts_main
+        } else if !tts_derived.is_empty() {
+            tts_derived
+        } else {
+            default_name.to_string()
+        };
+        (tts, keywords)
+    }
+
 
     // Parse emoji-test.txt and group skin tone variants
     let skin_tone_mods: [(&str, &str); 5] = [
@@ -89,10 +144,30 @@ fn main() {
                 .map(|cp| u32::from_str_radix(cp, 16).unwrap())
                 .collect::<Vec<_>>();
             let ch: String = codepoints.iter().filter_map(|&c| char::from_u32(c)).collect();
+            let codepoint_key = caps[1].to_string();
             let name_en = line.split('#').nth(1).unwrap().split_whitespace().skip(1).collect::<Vec<_>>().join(" ");
-            // CLDR lookups
-            let (_name_en_cldr, keywords_en) = cldr_en.get(&ch).cloned().unwrap_or((name_en.clone(), vec![]));
-            let (name_nl, keywords_nl) = cldr_nl.get(&ch).cloned().unwrap_or((name_en.clone(), vec![]));
+
+            // CLDR lookups (use codepoint string as key)
+            // Try direct lookup, then fallback by removing FE0F (VS16) if present
+            let lookup_with_fallback = |main: &HashMap<String, (String, Vec<String>)>, derived: &HashMap<String, (String, Vec<String>)>, key: &str, default_name: &str| {
+                if main.contains_key(key) || derived.contains_key(key) {
+                    merge_cldr(main, derived, key, default_name)
+                } else {
+                    // Remove FE0F (U+FE0F) from key and try again
+                    let fe0f = "FE0F";
+                    let parts: Vec<&str> = key.split_whitespace().collect();
+                    let filtered: Vec<&str> = parts.iter().filter(|&&cp| cp != fe0f).cloned().collect();
+                    let alt_key = filtered.join(" ");
+                    if main.contains_key(&alt_key) || derived.contains_key(&alt_key) {
+                        merge_cldr(main, derived, &alt_key, default_name)
+                    } else {
+                        (default_name.to_string(), vec![])
+                    }
+                }
+            };
+
+            let (_name_en_cldr, mut keywords_en) = lookup_with_fallback(&cldr_en_main, &cldr_en_derived, &codepoint_key, &name_en);
+            let (mut name_nl, mut keywords_nl) = lookup_with_fallback(&cldr_nl_main, &cldr_nl_derived, &codepoint_key, &name_en);
 
             // Detect if this is a skin tone variant
             let mut is_skin_tone = false;
@@ -116,6 +191,31 @@ fn main() {
                     base_to_skin_tones.entry(base_ch.clone()).or_insert([None, None, None, None, None])[idx] = Some(ch.clone());
                 }
             } else {
+                // Fallback: if keywords_en is empty, try to get from lightest skin tone variant
+                if keywords_en.is_empty() {
+                    for (i, (mod_cp, _)) in skin_tone_mods.iter().enumerate() {
+                        let mut skin_codepoints = codepoints.clone();
+                        skin_codepoints.push(u32::from_str_radix(mod_cp, 16).unwrap());
+                        let skin_key = skin_codepoints.iter().map(|c| format!("{:X}", c)).collect::<Vec<_>>().join(" ");
+                        let (_tts, kws) = merge_cldr(&cldr_en_main, &cldr_en_derived, &skin_key, "");
+                        if !kws.is_empty() {
+                            keywords_en = kws;
+                            break;
+                        }
+                    }
+                }
+                if keywords_nl.is_empty() {
+                    for (i, (mod_cp, _)) in skin_tone_mods.iter().enumerate() {
+                        let mut skin_codepoints = codepoints.clone();
+                        skin_codepoints.push(u32::from_str_radix(mod_cp, 16).unwrap());
+                        let skin_key = skin_codepoints.iter().map(|c| format!("{:X}", c)).collect::<Vec<_>>().join(" ");
+                        let (_tts, kws) = merge_cldr(&cldr_nl_main, &cldr_nl_derived, &skin_key, "");
+                        if !kws.is_empty() {
+                            keywords_nl = kws;
+                            break;
+                        }
+                    }
+                }
                 emoji_rows.push((ch.clone(), name_en, keywords_en, name_nl, keywords_nl, current_category.to_string(), base_ch.clone()));
             }
         }

@@ -10,7 +10,7 @@ pub fn run() {
     env_logger::init();
 
     // Record start time
-    let start_time = std::time::Instant::now();
+    let _start_time = std::time::Instant::now();
 
     let app = Application::builder()
         .application_id("dev.sjors.EmojiPicker")

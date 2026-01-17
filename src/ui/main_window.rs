@@ -8,7 +8,6 @@ use crate::ui::style;
 use gtk4::prelude::*;
 use gtk4::Stack;
 use gtk4::{Application, ApplicationWindow};
-use log::debug;
 
 pub struct MainWindow {
     window: ApplicationWindow,
@@ -75,7 +74,7 @@ impl MainWindow {
         let stack_clone = stack.clone();
         let search_results_grid_clone = search_results_grid;
         let categories_for_closure = categories.clone();
-        let controller_for_closure = controller.clone();
+        let _controller_for_closure = controller.clone();
         // Register UI update listener
         controller.borrow_mut().add_listener({
             let category_scrolled_clone = category_scrolled_clone.clone();
@@ -86,7 +85,7 @@ impl MainWindow {
                 if mode == crate::ui::app_controller::PickerMode::Search {
                     category_scrolled_clone.set_visible(false);
                     log::info!("UI listener: displaying {} emojis in search results grid", filtered_emojis.len());
-                    use gtk4::prelude::WidgetExtManual;
+                    
                     while let Some(child) = search_results_grid_clone.flowbox.first_child() {
                         search_results_grid_clone.flowbox.remove(&child);
                     }
