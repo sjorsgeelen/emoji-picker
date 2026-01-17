@@ -11,6 +11,7 @@ pub struct EmojiGrid {
     pub flowbox: FlowBox,
     pub selected_index: Rc<RefCell<Option<usize>>>,
     pub emoji_labels: Rc<RefCell<Vec<gtk4::Label>>>,
+    pub on_emoji_selected: Rc<RefCell<Option<Box<dyn Fn(usize) + 'static>>>>,
 }
 
 impl EmojiGrid {
@@ -51,11 +52,13 @@ impl EmojiGrid {
         scrolled.set_size_request(grid_width, grid_height);
 
         let selected_index = Rc::new(RefCell::new(None));
+        let on_emoji_selected = Rc::new(RefCell::new(None));
         let emoji_grid = Self {
             scrolled,
             flowbox,
             selected_index: selected_index.clone(),
             emoji_labels: emoji_labels.clone(),
+            on_emoji_selected: on_emoji_selected.clone(),
         };
 
         // Keyboard navigation
@@ -65,7 +68,8 @@ impl EmojiGrid {
         let emoji_labels_clone = emoji_labels.clone();
         let total_emojis = emoji_labels.borrow().len();
         // Focus transfer callback (to be set by window.rs)
-        let mut focus_category_bar: Option<Box<dyn Fn()>> = None;
+        let focus_category_bar: Option<Box<dyn Fn()>> = None;
+        let on_emoji_selected_cb = on_emoji_selected.clone();
         controller.connect_key_pressed(move |_, keyval, _, _| {
             let mut selected = selected_index_clone.borrow().unwrap_or(0);
             match keyval {
@@ -91,6 +95,9 @@ impl EmojiGrid {
                 }
                 gdk::Key::Return => {
                     // Handle emoji selection (emit signal or callback)
+                    if let Some(ref cb) = *on_emoji_selected_cb.borrow() {
+                        cb(selected);
+                    }
                 }
                 gdk::Key::Tab if keyval == gdk::Key::ISO_Left_Tab => {
                     // Move focus to category bar (Shift+Tab)
@@ -114,5 +121,10 @@ impl EmojiGrid {
         });
         emoji_grid.flowbox.add_controller(controller);
         emoji_grid
+    }
+
+    /// Register a callback to be called when an emoji is selected (e.g. via Return key).
+    pub fn set_on_emoji_selected<F: Fn(usize) + 'static>(&mut self, callback: F) {
+        *self.on_emoji_selected.borrow_mut() = Some(Box::new(callback));
     }
 }

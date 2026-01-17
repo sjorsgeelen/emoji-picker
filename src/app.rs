@@ -2,7 +2,8 @@ use gtk4::prelude::*;
 // ...existing code...
 use gtk4::Application;
 
-use crate::ui::window::EmojiWindow;
+// (removed redundant mod ui;)
+use crate::ui::main_window::MainWindow;
 
 pub fn run() {
     // Initialize logging
@@ -16,7 +17,7 @@ pub fn run() {
         .build();
 
     app.connect_activate(move |app| {
-        let window = EmojiWindow::new(app, start_time);
+        let window = MainWindow::new(app);
         window.present();
     });
 

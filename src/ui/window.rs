@@ -53,14 +53,8 @@ impl EmojiWindow {
     if let Some(first_grid) = emoji_grids.first() {
         // Tab from category bar moves focus to emoji grid
         let emoji_flowbox = first_grid.flowbox.clone();
-        let focus_emoji_grid = move || {
-            emoji_flowbox.grab_focus();
-        };
         // Shift+Tab from emoji grid moves focus to category bar
         let cat_bar_widget = category_bar.button_bar.clone();
-        let focus_category_bar = move || {
-            cat_bar_widget.grab_focus();
-        };
         // TODO: Actually set these callbacks in the components if exposed
         // This requires exposing a setter or callback registration in both structs
         // For now, just call grab_focus on Tab/Shift+Tab manually if needed
