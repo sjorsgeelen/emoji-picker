@@ -4,9 +4,12 @@
 use crate::emoji::emoji_data::Emoji;
 
 /// The current mode of the picker UI.
+/// The current mode of the picker UI.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PickerMode {
+    /// Default mode: show categories and category grid.
     Browse,
+    /// Search mode: show search results grid, hide/de-emphasize category bar.
     Search,
 }
 
@@ -30,6 +33,7 @@ impl EmojiPickerController {
         }
     }
 
+    /// Handle a search query update. Switches mode and updates filtered results.
     pub fn handle_search(&mut self, query: &str) {
         self.search_query = query.to_string();
         if query.is_empty() {
@@ -67,21 +71,46 @@ mod tests {
     fn test_initial_mode_is_browse() {
         let controller = make_controller();
         assert_eq!(controller.mode, PickerMode::Browse);
+        assert!(controller.search_query.is_empty());
+        assert!(controller.filtered_emojis.is_empty());
     }
 
     #[test]
-    fn test_search_changes_mode_and_filters() {
+    fn test_search_switches_to_search_mode_and_filters() {
         let mut controller = make_controller();
         controller.handle_search("smile");
         assert_eq!(controller.mode, PickerMode::Search);
-        assert!(controller.filtered_emojis.iter().any(|e| e.name_en.contains("smile")));
+        assert_eq!(controller.search_query, "smile");
+        assert!(controller.filtered_emojis.iter().all(|e| e.name_en.contains("smile") || e.keywords_en.iter().any(|k| k.contains("smile"))));
     }
 
     #[test]
-    fn test_empty_search_restores_browse_mode() {
+    fn test_search_empty_switches_to_browse_mode() {
         let mut controller = make_controller();
+        controller.handle_search("smile");
+        assert_eq!(controller.mode, PickerMode::Search);
         controller.handle_search("");
         assert_eq!(controller.mode, PickerMode::Browse);
+        assert!(controller.filtered_emojis.is_empty());
+    }
+
+    #[test]
+    fn test_search_switching_multiple_times() {
+        let mut controller = make_controller();
+        // Start in browse
+        assert_eq!(controller.mode, PickerMode::Browse);
+        // Search
+        controller.handle_search("joy");
+        assert_eq!(controller.mode, PickerMode::Search);
+        assert!(!controller.filtered_emojis.is_empty());
+        // Clear search
+        controller.handle_search("");
+        assert_eq!(controller.mode, PickerMode::Browse);
+        assert!(controller.filtered_emojis.is_empty());
+        // Search again
+        controller.handle_search("face");
+        assert_eq!(controller.mode, PickerMode::Search);
+        assert!(!controller.filtered_emojis.is_empty());
     }
 }
 
