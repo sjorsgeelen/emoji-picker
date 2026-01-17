@@ -1,52 +1,43 @@
 use gtk4::prelude::*;
-use gtk4::{Entry, Grid, ScrolledWindow};
+use gtk4::Entry;
 
+/// SearchBar widget for emoji picker UI.
+/// Handles user input and emits search query changes via callback.
 pub struct SearchBar {
-    pub entry: Entry,
-    pub scrolled: ScrolledWindow,
-    pub grid: Grid,
-    pub on_search: std::rc::Rc<std::cell::RefCell<Option<Box<dyn Fn(&str) + 'static>>>>,
+    entry: Entry,
+    on_search: std::rc::Rc<std::cell::RefCell<Option<Box<dyn Fn(&str) + 'static>>>>,
 }
 
 impl SearchBar {
-    /// Register a callback to be called when the search query changes.
-    pub fn set_on_search<F: Fn(&str) + 'static>(&mut self, callback: F) {
-        *self.on_search.borrow_mut() = Some(Box::new(callback));
-    }
-
-    pub fn new(grid_width: i32, grid_height: i32, columns: i32, spacing: i32) -> Self {
+    /// Create a new SearchBar widget.
+    ///
+    /// Sizing should be set by the client using `search_bar.widget().set_size_request(width, height)`
+    /// or by placing the widget in a GTK layout container.
+    pub fn new() -> Self {
         let entry = Entry::new();
-        entry.set_size_request(grid_width, -1);
         entry.set_placeholder_text(Some("Search emoji…"));
-        let grid = Grid::builder()
-            .row_spacing(spacing)
-            .column_spacing(spacing)
-            .margin_top(0)
-            .margin_bottom(0)
-            .margin_start(0)
-            .margin_end(0)
-            .build();
-        let scrolled = ScrolledWindow::builder()
-            .child(&grid)
-            .min_content_height(grid_height)
-            .max_content_height(grid_height)
-            .min_content_width(grid_width)
-            .max_content_width(grid_width)
-            .hscrollbar_policy(gtk4::PolicyType::Never)
-            .margin_top(0)
-            .margin_bottom(0)
-            .margin_start(0)
-            .margin_end(0)
-            .build();
-        scrolled.set_size_request(grid_width, grid_height);
         let on_search: std::rc::Rc<std::cell::RefCell<Option<Box<dyn Fn(&str) + 'static>>>> = std::rc::Rc::new(std::cell::RefCell::new(None));
-        let entry_clone = entry.clone();
         let on_search_cb = on_search.clone();
         entry.connect_changed(move |e| {
             if let Some(ref cb) = *on_search_cb.borrow() {
                 cb(&e.text());
             }
         });
-        Self { entry, scrolled, grid, on_search }
+        Self { entry, on_search }
+    }
+
+    /// Register a callback to be called when the search query changes.
+    pub fn set_on_search<F: Fn(&str) + 'static>(&mut self, callback: F) {
+        *self.on_search.borrow_mut() = Some(Box::new(callback));
+    }
+
+    /// Get the current search query string.
+    pub fn get_query(&self) -> String {
+        self.entry.text().to_string()
+    }
+
+    /// Get a reference to the underlying GTK Entry widget.
+    pub fn widget(&self) -> &Entry {
+        &self.entry
     }
 }

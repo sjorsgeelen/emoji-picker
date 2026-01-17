@@ -13,39 +13,77 @@ pub enum PickerMode {
     Search,
 }
 
-
 /// Centralized state and controller for the emoji picker UI, pure and testable.
 pub struct EmojiPickerController {
     pub mode: PickerMode,
     pub search_query: String,
     pub all_emojis: Vec<Emoji>,
     pub filtered_emojis: Vec<Emoji>,
+    listeners: Vec<Box<dyn Fn(PickerMode, &[Emoji])>>, // Observer pattern
 }
 
-
 impl EmojiPickerController {
+    /// Register a callback to be called when the controller state changes.
+    pub fn add_listener<F: Fn(PickerMode, &[Emoji]) + 'static>(&mut self, f: F) {
+        self.listeners.push(Box::new(f));
+    }
+
+    fn notify_listeners(&self) {
+        for cb in &self.listeners {
+            cb(self.mode, &self.filtered_emojis);
+        }
+    }
+    /// Returns true if the category bar should be shown (i.e., in Browse mode).
+    pub fn show_category_bar(&self) -> bool {
+        matches!(self.mode, PickerMode::Browse)
+    }
     pub fn new(all_emojis: Vec<Emoji>) -> Self {
         Self {
             mode: PickerMode::Browse,
             search_query: String::new(),
             all_emojis,
             filtered_emojis: Vec::new(),
+            listeners: Vec::new(), // Initialize listeners
         }
     }
 
     /// Handle a search query update. Switches mode and updates filtered results.
     pub fn handle_search(&mut self, query: &str) {
+        log::info!(
+            "handle_search called with query: '{}', current mode: {:?}",
+            query,
+            self.mode
+        );
         self.search_query = query.to_string();
         if query.is_empty() {
+            log::info!("Switching to Browse mode (empty query)");
             self.mode = PickerMode::Browse;
             self.filtered_emojis.clear();
         } else {
+            log::info!("Switching to Search mode (query: '{}')", query);
             self.mode = PickerMode::Search;
-            let filtered: Vec<_> = self.all_emojis.iter()
-                .filter(|e| e.name_en.contains(query) || e.keywords_en.iter().any(|k| k.contains(query)))
-                .cloned().collect();
+            let q = query.to_lowercase();
+            let filtered: Vec<_> = self
+                .all_emojis
+                .iter()
+                .filter(|e| {
+                    e.name_en.to_lowercase().contains(&q)
+                        || e.keywords_en.iter().any(|k| k.to_lowercase().contains(&q))
+                        || e.name_nl.to_lowercase().contains(&q)
+                        || e.keywords_nl.iter().any(|k| k.to_lowercase().contains(&q))
+                        || e.ch.contains(&q)
+                })
+                .cloned()
+                .collect();
             self.filtered_emojis = filtered;
         }
+        log::info!(
+            "After search, mode is now: {:?}, filtered_emojis: {}",
+            self.mode,
+            self.filtered_emojis.len()
+        );
+        log::info!("Calling notify_listeners ({} listeners)", self.listeners.len());
+        self.notify_listeners(); // Notify listeners after handling search
     }
 
     pub fn handle_category_selected(&mut self, _category_idx: usize) {
@@ -58,6 +96,28 @@ impl EmojiPickerController {
 }
 
 #[cfg(test)]
+#[test]
+fn test_show_category_bar_logic() {
+    use super::*;
+    let emojis = vec![crate::emoji::emoji_data::Emoji {
+        ch: "😀",
+        name_en: "grinning face",
+        keywords_en: &[],
+        name_nl: "grijnzend gezicht",
+        keywords_nl: &[],
+        category: "Smileys & Emotion",
+        skin_tone_variants: None,
+    }];
+    let mut controller = EmojiPickerController::new(emojis.clone());
+    // Initially in Browse mode
+    assert!(controller.show_category_bar());
+    // Switch to Search mode
+    controller.handle_search("smile");
+    assert!(!controller.show_category_bar());
+    // Clear search (should return to Browse mode)
+    controller.handle_search("");
+    assert!(controller.show_category_bar());
+}
 mod tests {
     use super::*;
     use crate::emoji::emoji_data::EMOJIS;
@@ -81,7 +141,11 @@ mod tests {
         controller.handle_search("smile");
         assert_eq!(controller.mode, PickerMode::Search);
         assert_eq!(controller.search_query, "smile");
-        assert!(controller.filtered_emojis.iter().all(|e| e.name_en.contains("smile") || e.keywords_en.iter().any(|k| k.contains("smile"))));
+        assert!(controller
+            .filtered_emojis
+            .iter()
+            .all(|e| e.name_en.contains("smile")
+                || e.keywords_en.iter().any(|k| k.contains("smile"))));
     }
 
     #[test]
@@ -114,11 +178,9 @@ mod tests {
     }
 }
 
-
 /*
 Event flow:
 - User types in SearchBar: on_search callback updates controller state, triggers search, updates EmojiGrid, hides/shows CategoryBar.
 - User clicks a category: on_category_selected callback updates EmojiGrid to show that category.
 - User selects an emoji: on_emoji_selected callback handles the action (e.g., copy to clipboard).
 */
-
