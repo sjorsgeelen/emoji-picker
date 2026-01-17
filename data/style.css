@@ -1,0 +1,10 @@
+/* Emoji Picker CSS */
+
+.emoji-label {
+    font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'EmojiOne Color', 'Twemoji Mozilla', sans-serif;
+    /* font-size, min-width, min-height set in Rust */
+}
+
+.tab-emoji {
+    /* font-size, min-width, min-height set in Rust */
+}

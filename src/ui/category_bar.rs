@@ -1,5 +1,6 @@
 use gtk4::prelude::*;
-use gtk4::{Box as GtkBox, Orientation, Button, Label, Align};
+use gtk4::{Box as GtkBox, Orientation, Button, Align};
+use crate::ui::emoji_label::EmojiLabel;
 use std::rc::Rc;
 use std::cell::RefCell;
 use gtk4::glib::signal::Propagation;
@@ -41,8 +42,12 @@ impl CategoryBar {
         for &category in categories.iter() {
             // Find the first emoji in this category
             let tab_emoji = EMOJIS.iter().find(|e| e.category == category).map(|e| e.ch).unwrap_or("?");
-            let tab_label = Label::new(Some(tab_emoji));
+            let tab_label = EmojiLabel::new(tab_emoji);
             tab_label.set_css_classes(&["emoji-label", "tab-emoji"]);
+            // Set dynamic size properties for tab labels
+            tab_label.set_width_request(_grid_width / categories.len() as i32);
+            tab_label.set_height_request(_grid_width / categories.len() as i32);
+            // Note: gtk4::Label does not have set_font_size, so use Pango attributes if needed for font size
             let button = Button::builder().child(&tab_label).build();
             let stack_clone = stack.clone();
             let cat_name = category.to_string();

@@ -1,3 +1,4 @@
+use crate::ui::emoji_label::EmojiLabel;
 use gtk4::prelude::*;
 use gtk4::{FlowBox, ScrolledWindow};
 use crate::ui::constants::{SPACING, COLUMNS};
@@ -29,11 +30,15 @@ impl EmojiGrid {
             .build();
         let emoji_labels = Rc::new(RefCell::new(Vec::new()));
         for emoji in emojis.iter() {
-            let label = gtk4::Label::new(Some(emoji.ch));
+            let label = EmojiLabel::new(emoji.ch);
             label.set_widget_name("emoji");
             label.add_css_class("emoji-label");
             label.set_halign(gtk4::Align::Center);
             label.set_valign(gtk4::Align::Center);
+            // Set dynamic size properties
+            label.set_width_request(grid_width / COLUMNS);
+            label.set_height_request(grid_height / crate::ui::constants::ROWS);
+            // Note: gtk4::Label does not have set_font_size, so use Pango attributes if needed for font size
             flowbox.insert(&label, -1);
             emoji_labels.borrow_mut().push(label);
         }

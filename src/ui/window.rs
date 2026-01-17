@@ -93,7 +93,7 @@ impl EmojiWindow {
     window.set_resizable(false);
 
     // Add CSS for emoji font and tab emoji size
-    let provider = style::setup_css(emoji_size);
+    let provider = style::setup_css();
     gtk4::style_context_add_provider_for_display(
         &gtk4::gdk::Display::default().expect("No default display found"),
         &provider,

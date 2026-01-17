@@ -1,3 +1,4 @@
+pub mod emoji_label;
 pub mod constants;
 pub mod style;
 pub mod category_bar;

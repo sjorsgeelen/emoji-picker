@@ -1,10 +1,15 @@
 use gtk4::CssProvider;
+use std::fs;
+use std::path::Path;
 
-pub fn setup_css(emoji_size: i32) -> CssProvider {
+/// Loads and applies the emoji picker CSS from a static file.
+///
+/// All dynamic sizing (font-size, min-width, min-height) should be set directly on widgets in Rust.
+pub fn setup_css() -> CssProvider {
     let provider = CssProvider::new();
-    provider.load_from_data(&format!(
-        ".emoji-label {{ font-family: 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', 'EmojiOne Color', 'Twemoji Mozilla', sans-serif; font-size: {}px; min-width: {}px; min-height: {}px; }}\n.tab-emoji {{ font-size: {}px; min-width: {}px; min-height: {}px; }}",
-        emoji_size, emoji_size, emoji_size, emoji_size, emoji_size, emoji_size
-    ));
+    let css_path = Path::new("data/style.css");
+    let css = fs::read_to_string(css_path)
+        .expect("Failed to read CSS file at data/style.css");
+    provider.load_from_data(&css);
     provider
 }
