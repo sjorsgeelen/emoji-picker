@@ -12,11 +12,15 @@
 # 5. Create a distributable .flatpak bundle
 set -e
 
-# 1. Build Rust binary
-cargo build --release
+if [[ "$1" == "package" ]]; then
+	echo "[ci-build] Packaging only: skipping build and test."
+else
+	# 1. Build Rust binary
+	cargo build --release
 
-# 2. Run tests
-cargo test --release
+	# 2. Run tests
+	cargo test --release
+fi
 
 # 3. Build Flatpak package and export to repo
 flatpak-builder --force-clean --repo=repo build-dir packaging/nl.dibitat.emoji_picker.json

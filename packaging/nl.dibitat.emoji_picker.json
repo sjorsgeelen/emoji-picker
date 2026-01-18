@@ -7,15 +7,9 @@
     "sdk": "org.gnome.Sdk",
     "command": "emoji-picker",
     "finish-args": [
-        "--share=network",
-        "--share=ipc",
         "--socket=fallback-x11",
         "--socket=wayland",
-        "--device=dri",
-        "--filesystem=host",
-        "--env=RUST_BACKTRACE=1",
-        "--talk-name=org.freedesktop.DBus",
-        "--own-name=org.freedesktop.DBus"
+        "--talk-name=org.freedesktop.portal.Desktop"
     ],
     "build-options": {
         "append-path": "/usr/local/bin"
@@ -28,7 +22,8 @@
                 "install -Dm755 target/release/emoji-picker /app/bin/emoji-picker",
                 "install -Dm644 packaging/emoji-picker.svg /app/share/icons/hicolor/scalable/apps/nl.dibitat.emoji_picker.svg",
                 "install -Dm644 packaging/emoji-picker.desktop /app/share/applications/nl.dibitat.emoji_picker.desktop",
-                "install -Dm644 packaging/nl.dibitat.emoji_picker.appdata.xml /app/share/metainfo/nl.dibitat.emoji_picker.appdata.xml"
+                "install -Dm644 packaging/nl.dibitat.emoji_picker.appdata.xml /app/share/metainfo/nl.dibitat.emoji_picker.appdata.xml",
+                "install -Dm644 data/style.css /app/share/emoji-picker/style.css"
             ],
             "sources": [
                 { "type": "dir", "path": ".." }

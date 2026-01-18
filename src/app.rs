@@ -13,7 +13,7 @@ pub fn run() {
     let _start_time = std::time::Instant::now();
 
     let app = Application::builder()
-        .application_id("dev.sjors.EmojiPicker")
+        .application_id("nl.dibitat.emoji_picker")
         .build();
 
     app.connect_activate(move |app| {
