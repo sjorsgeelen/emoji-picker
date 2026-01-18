@@ -6,3 +6,4 @@ Icon=emoji-picker
 Terminal=false
 Type=Application
 Categories=Utility;
+StartupWMClass=nl.dibitat.emoji_picker

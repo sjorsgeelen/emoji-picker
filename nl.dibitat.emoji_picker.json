@@ -1,0 +1,29 @@
+{
+    "app-id": "nl.dibitat.emoji_picker",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "45",
+    "sdk": "org.gnome.Sdk",
+    "command": "emoji-picker",
+    "finish-args": [
+        "--share=network",
+        "--share=ipc",
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--device=dri",
+        "--filesystem=host",
+        "--env=RUST_BACKTRACE=1"
+    ],
+    "modules": [
+        {
+            "name": "emoji-picker",
+            "buildsystem": "simple",
+            "build-commands": [
+                "cargo build --release",
+                "install -Dm755 target/release/emoji-picker /app/bin/emoji-picker"
+            ],
+            "sources": [
+                { "type": "dir", "path": "." }
+            ]
+        }
+    ]
+}
