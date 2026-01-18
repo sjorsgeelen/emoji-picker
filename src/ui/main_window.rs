@@ -74,113 +74,22 @@ impl MainWindow {
         ));
         let category_scrolled_clone = category_scrolled.clone();
         let stack_clone = stack.clone();
-        let search_results_grid_clone = search_results_grid;
+        let mut search_results_grid_clone = search_results_grid;
         let categories_for_closure = categories.clone();
         let _controller_for_closure = controller.clone();
         // Register UI update listener
         controller.borrow_mut().add_listener({
             let category_scrolled_clone = category_scrolled_clone.clone();
             let stack_clone = stack_clone.clone();
-            let search_results_grid_clone = search_results_grid_clone;
             let categories_for_closure = categories_for_closure.clone();
+            let search_results_grid_ptr = std::rc::Rc::new(std::cell::RefCell::new(search_results_grid_clone));
             move |mode, filtered_emojis: &[crate::emoji::emoji_data::Emoji]| {
                 if mode == crate::ui::app_controller::PickerMode::Search {
                     category_scrolled_clone.set_visible(false);
                     log::info!("UI listener: displaying {} emojis in search results grid", filtered_emojis.len());
-                    
-                    while let Some(child) = search_results_grid_clone.flowbox.first_child() {
-                        search_results_grid_clone.flowbox.remove(&child);
-                    }
-                    use gtk4::gdk;
-                    let mut emoji_labels: Vec<gtk4::Label> = Vec::new();
-                    for emoji in filtered_emojis {
-                        let label = crate::ui::emoji_label::EmojiLabel::new(emoji.ch);
-                        label.set_widget_name("emoji");
-                        label.add_css_class("emoji-label");
-                        label.set_halign(gtk4::Align::Fill);
-                        label.set_valign(gtk4::Align::Start);
-                        let emoji_str = emoji.ch.to_string();
-                        let label_clone = label.clone();
-                        let gesture = gtk4::GestureClick::new();
-                        gesture.connect_pressed(move |_, _, _, _| {
-                            crate::clipboard::copy(&emoji_str);
-                            label_clone.add_css_class("copied-emoji");
-                            label_clone.queue_draw();
-                            let label_inner = label_clone.clone();
-                            gtk4::glib::timeout_add_local_once(std::time::Duration::from_millis(500), move || {
-                                label_inner.remove_css_class("copied-emoji");
-                                label_inner.queue_draw();
-                            });
-                        });
-                        label.add_controller(gesture);
-                        search_results_grid_clone.flowbox.insert(&label, -1);
-                        emoji_labels.push(label);
-                    }
-                    // Keyboard navigation for search results grid
-                    let selected_index = std::rc::Rc::new(std::cell::RefCell::new(None));
-                    if !emoji_labels.is_empty() {
-                        *selected_index.borrow_mut() = Some(0);
-                        if let Some(label) = emoji_labels.get(0) {
-                            label.add_css_class("selected-emoji");
-                        }
-                    }
-                    let emoji_labels_rc = std::rc::Rc::new(std::cell::RefCell::new(emoji_labels));
-                    let selected_index_clone = selected_index.clone();
-                    let emoji_labels_clone = emoji_labels_rc.clone();
-                    let key_controller = gtk4::EventControllerKey::new();
-                    key_controller.connect_key_pressed(move |_, keyval, _, _| {
-                        let mut selected = selected_index_clone.borrow().unwrap_or(0);
-                        let total_emojis = emoji_labels_clone.borrow().len();
-                        if total_emojis == 0 {
-                            return gtk4::glib::signal::Propagation::Proceed;
-                        }
-                        match keyval {
-                            gdk::Key::Right => {
-                                if selected + 1 < total_emojis {
-                                    selected += 1;
-                                }
-                            }
-                            gdk::Key::Left => {
-                                if selected > 0 {
-                                    selected -= 1;
-                                }
-                            }
-                            gdk::Key::Down => {
-                                if selected + (COLUMNS as usize) < total_emojis {
-                                    selected += COLUMNS as usize;
-                                }
-                            }
-                            gdk::Key::Up => {
-                                if selected >= COLUMNS as usize {
-                                    selected -= COLUMNS as usize;
-                                }
-                            }
-                            gdk::Key::Return => {
-                                if let Some(label) = emoji_labels_clone.borrow().get(selected) {
-                                    let emoji = label.text().to_string();
-                                    crate::clipboard::copy(&emoji);
-                                    label.add_css_class("copied-emoji");
-                                    label.queue_draw();
-                                    let label_clone = label.clone();
-                                    gtk4::glib::timeout_add_local_once(std::time::Duration::from_millis(500), move || {
-                                        label_clone.remove_css_class("copied-emoji");
-                                        label_clone.queue_draw();
-                                    });
-                                }
-                            }
-                            _ => {}
-                        }
-                        *selected_index_clone.borrow_mut() = Some(selected);
-                        for (i, label) in emoji_labels_clone.borrow().iter().enumerate() {
-                            if i == selected {
-                                label.add_css_class("selected-emoji");
-                            } else {
-                                label.remove_css_class("selected-emoji");
-                            }
-                        }
-                        gtk4::glib::signal::Propagation::Stop
-                    });
-                    search_results_grid_clone.flowbox.add_controller(key_controller);
+                    let emoji_refs: Vec<_> = filtered_emojis.iter().collect();
+                    let mut grid = search_results_grid_ptr.borrow_mut();
+                    grid.update_emojis(&emoji_refs, grid_width, grid_height);
                     stack_clone.set_visible_child_name("__search__");
                 } else {
                     category_scrolled_clone.set_visible(true);

@@ -1,3 +1,50 @@
+// ...existing code...
+
+impl EmojiGrid {
+    /// Update the emojis displayed in the grid, clearing and rebuilding the FlowBox and label state.
+    pub fn update_emojis(&mut self, emojis: &[&Emoji], grid_width: i32, grid_height: i32) {
+        // Remove all children from the flowbox
+        while let Some(child) = self.flowbox.first_child() {
+            self.flowbox.remove(&child);
+        }
+        self.emoji_labels.borrow_mut().clear();
+        // Add new emoji labels
+        for emoji in emojis {
+            let label = EmojiLabel::new(emoji.ch);
+            label.set_widget_name("emoji");
+            label.add_css_class("emoji-label");
+            label.set_halign(gtk4::Align::Fill);
+            label.set_valign(gtk4::Align::Start);
+            label.set_width_request(grid_width / COLUMNS);
+            label.set_height_request(grid_height / crate::ui::constants::ROWS);
+            // Copy to clipboard and visual feedback on click
+            let emoji_str = emoji.ch.to_string();
+            let label_clone = label.clone();
+            let gesture = GestureClick::new();
+            gesture.connect_pressed(move |_, _, _, _| {
+                clipboard::copy(&emoji_str);
+                label_clone.add_css_class("copied-emoji");
+                let label_inner = label_clone.clone();
+                gtk4::glib::timeout_add_local_once(std::time::Duration::from_millis(500), move || {
+                    label_inner.remove_css_class("copied-emoji");
+                });
+            });
+            label.add_controller(gesture);
+            self.flowbox.insert(&label, -1);
+            self.emoji_labels.borrow_mut().push(label);
+        }
+        // Reset selection
+        if !self.emoji_labels.borrow().is_empty() {
+            *self.selected_index.borrow_mut() = Some(0);
+            if let Some(label) = self.emoji_labels.borrow().get(0) {
+                label.add_css_class("selected-emoji");
+            }
+        } else {
+            *self.selected_index.borrow_mut() = None;
+        }
+    }
+    // ...existing methods...
+}
 use crate::clipboard;
 use crate::ui::emoji_label::EmojiLabel;
 use gtk4::prelude::*;
