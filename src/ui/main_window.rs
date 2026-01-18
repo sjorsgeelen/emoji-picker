@@ -38,8 +38,10 @@ impl MainWindow {
             stack.add_named(&emoji_grid.scrolled, Some(category));
             emoji_grids.push(emoji_grid);
         }
-        let search_results_grid = EmojiGrid::new(&[], grid_width, grid_height);
-        stack.add_named(&search_results_grid.scrolled, Some("__search__"));
+        // search_results_grid is now managed by Rc<RefCell<...>>
+        let search_results_grid = std::rc::Rc::new(std::cell::RefCell::new(EmojiGrid::new(&[], grid_width, grid_height)));
+        // Add the search results grid to the stack with the name "__search__"
+        stack.add_named(&search_results_grid.borrow().scrolled, Some("__search__"));
 
         let category_bar = CategoryBar::new(&categories, &stack, grid_width);
 
@@ -74,7 +76,7 @@ impl MainWindow {
         ));
         let category_scrolled_clone = category_scrolled.clone();
         let stack_clone = stack.clone();
-        let mut search_results_grid_clone = search_results_grid;
+        let search_results_grid_clone = search_results_grid;
         let categories_for_closure = categories.clone();
         let _controller_for_closure = controller.clone();
         // Register UI update listener
@@ -88,8 +90,8 @@ impl MainWindow {
                     category_scrolled_clone.set_visible(false);
                     log::info!("UI listener: displaying {} emojis in search results grid", filtered_emojis.len());
                     let emoji_refs: Vec<_> = filtered_emojis.iter().collect();
-                    let mut grid = search_results_grid_ptr.borrow_mut();
-                    grid.update_emojis(&emoji_refs, grid_width, grid_height);
+                    let grid_rc = search_results_grid_ptr.borrow_mut();
+                    grid_rc.borrow_mut().update_emojis(&emoji_refs, grid_width, grid_height);
                     stack_clone.set_visible_child_name("__search__");
                 } else {
                     category_scrolled_clone.set_visible(true);
@@ -114,7 +116,9 @@ impl MainWindow {
             .child(&vbox)
             .build();
         window.set_size_request(grid_width, window_height);
-        window.set_resizable(false);
+                let search_results_grid = std::rc::Rc::new(std::cell::RefCell::new(EmojiGrid::new(&[], grid_width, grid_height)));
+
+        // No close-on-select for search_results_grid: just copy on Enter (handled in EmojiGrid)
 
         // Add Escape key handler to close the window
         let window_clone = window.clone();
