@@ -1,7 +1,11 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/rust
 {
-	"name": "Emoji Picker Dev Container",
+		"name": "Emoji Picker Dev Container",
+		"runArgs": [
+			"--privileged",
+			"--cap-add=SYS_ADMIN"
+		],
 	// Use a Dockerfile. More info: https://containers.dev/guide/dockerfile
 	"build": {
         // Path is relative to the devcontainer.json file.

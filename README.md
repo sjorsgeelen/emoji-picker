@@ -1,5 +1,23 @@
 # emoji-picker
 
+## CI/Build Process
+
+This project uses a portable build script (`ci-build.sh`) for local development and CI:
+
+- Builds the Rust binary (`cargo build --release`)
+- Runs Rust tests (`cargo test --release`)
+- Packages the app as a Flatpak using the prebuilt binary
+- (Optional) Runs the Flatpak app in the build sandbox for a smoke test
+- (Optional) Creates a distributable `.flatpak` bundle
+
+You can run the script with:
+
+    ./ci-build.sh
+
+This approach is compatible with local development, CI, and can be translated to Forgejo Actions or GitHub Actions for full automation.
+
+---
+
 ## ✨ Features
 
 - ⚡ **Instant startup** – Launches and is ready to use in a flash
@@ -48,7 +66,7 @@ I want to build a fast emoji-picker for GNOME.
 
 ## Development & Contribution Guidelines
 
-Please refer to [RUST_INSTRUCTIONS.md](RUST_INSTRUCTIONS.md) for Rust best practices, project conventions, and contribution guidelines. Following these instructions helps maintain code quality and consistency.
+Please refer to [.instructions.md](.instructions.md) for Rust best practices, project conventions, and contribution guidelines. Following these instructions helps maintain code quality and consistency.
 
 ## repo structure
 
@@ -71,4 +89,10 @@ emoji-picker/
 │   │   └── search.rs        # Fast search logic
 │   └── clipboard.rs
 └── README.md
+```
+
+## Release Recipe
+
+```
+flatpak-builder --force-clean --disable-rofiles-fuse build-dir nl.dibitat.emoji_picker.json
 ```

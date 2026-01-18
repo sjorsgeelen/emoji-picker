@@ -22,3 +22,18 @@ target
 
 # downloaded emoji data files
 data/downloaded/*
+
+# Rust build artifacts
+/target/
+
+# Flatpak build artifacts
+/build-dir/
+/repo/
+/emoji-picker.flatpak
+.flatpak-builder/
+
+# Editor/OS files
+*.swp
+*.DS_Store
+
+

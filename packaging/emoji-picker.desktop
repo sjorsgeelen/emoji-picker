@@ -2,7 +2,7 @@
 Name=Emoji Picker
 Comment=Quickly search and copy emoji to clipboard
 Exec=emoji-picker
-Icon=emoji-picker
+Icon=nl.dibitat.emoji_picker
 Terminal=false
 Type=Application
 Categories=Utility;
