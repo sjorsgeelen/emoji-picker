@@ -1,5 +1,3 @@
-
-
 # emoji-picker
 
 ## ✨ Features
@@ -24,8 +22,6 @@ I want the app to be focused on keyboard UX by making it superfast in start up, 
 
 
 ## Roadmap / Backlog
-- [ ] Close picker with a keystroke
-	- Allow the user to quickly close the emoji picker using a keyboard shortcut (e.g., Escape key) for fast, unobtrusive UX 
 - [ ] Add a tab for recently used emoji
 	- Track emoji usage and display most recent in a dedicated tab or category
 - [ ] User-configurable settings
@@ -39,6 +35,8 @@ I want the app to be focused on keyboard UX by making it superfast in start up, 
 	- Note: Due to Flatpak sandboxing, direct insertion into another app's text field is not possible. This feature will only be available in native (non-sandboxed) builds. For Flatpak, the emoji will be copied to the clipboard and the user can paste manually.
 - [ ] Package and easy installation
 	- Provide distribution packages (Flatpak, .deb, etc.) and simple install instructions
+- [ ] Tooltip on long selection
+	- When an emoji is selected for more than 2 seconds, show a tooltip with its name and keywords.
 
 Recently used emojis are suggested in a recently used category.
 
