@@ -1,5 +1,22 @@
 
+
 # emoji-picker
+
+## ✨ Features
+
+- ⚡ **Instant startup** – Launches and is ready to use in a flash
+- 🔎 **Fuzzy search** – Search emoji by name or keywords (supports multiple locales)
+- ⌨️ **Full keyboard navigation** – Browse, search, and select emoji without touching the mouse
+- 🖱️ **Mouse support** – Click any emoji to copy it
+- 📋 **Copy to clipboard** – Press Enter or click to copy the selected emoji
+- 🎨 **Modern GTK4 UI** – Clean, responsive, and follows GNOME conventions
+- 🟩 **Visual feedback** – Highlight animation when emoji is copied
+- 🗂️ **Category browsing** – Quickly jump between emoji categories
+- 🔍 **Live search results** – See results as you type
+- 🏳️‍🌈 **Unicode 15+ emoji support** – Always up to date
+- 🌓 **System theme aware** – Follows light/dark mode (if supported by system)
+- 🏃 **Fast exit** – Press Escape to instantly close the picker
+
 
 The goal of this project is to (vibe)code a fast emoji-picker for GNOME. A common use case is that a user presses 'super'+'.', fuzzy searches the desired emoji based on the name and/or keywords in English or another localized form, and when the user presses 'return', the selected emoji (or Unicode character) is copied to the clipboard or inserted automatically.
 
@@ -7,7 +24,8 @@ I want the app to be focused on keyboard UX by making it superfast in start up, 
 
 
 ## Roadmap / Backlog
-
+- [ ] Close picker with a keystroke
+	- Allow the user to quickly close the emoji picker using a keyboard shortcut (e.g., Escape key) for fast, unobtrusive UX 
 - [ ] Add a tab for recently used emoji
 	- Track emoji usage and display most recent in a dedicated tab or category
 - [ ] User-configurable settings
@@ -18,6 +36,7 @@ I want the app to be focused on keyboard UX by making it superfast in start up, 
 	- User can select preferred language/locale for emoji search and keywords
 - [ ] Insert copied emoji directly at previous cursor position
 	- If picker is launched from a text field, insert emoji at the original cursor location
+	- Note: Due to Flatpak sandboxing, direct insertion into another app's text field is not possible. This feature will only be available in native (non-sandboxed) builds. For Flatpak, the emoji will be copied to the clipboard and the user can paste manually.
 - [ ] Package and easy installation
 	- Provide distribution packages (Flatpak, .deb, etc.) and simple install instructions
 

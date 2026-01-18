@@ -196,21 +196,6 @@ impl MainWindow {
             controller.borrow_mut().handle_search(query);
         });
 
-        // Add key event controller to focus search bar on typing
-        let search_entry = search_bar.widget().clone();
-        let key_controller = gtk4::EventControllerKey::new();
-        key_controller.connect_key_pressed(move |_, keyval, _keycode, _state| {
-            if !search_entry.has_focus() {
-                if let Some(c) = keyval.to_unicode() {
-                    if !c.is_control() {
-                        search_entry.grab_focus();
-                        return gtk4::glib::signal::Propagation::Stop;
-                    }
-                }
-            }
-            gtk4::glib::signal::Propagation::Proceed
-        });
-
         let window = ApplicationWindow::builder()
             .application(app)
             .title("Emoji Picker")
@@ -221,6 +206,28 @@ impl MainWindow {
             .build();
         window.set_size_request(grid_width, window_height);
         window.set_resizable(false);
+
+        // Add Escape key handler to close the window
+        let window_clone = window.clone();
+        let search_entry = search_bar.widget().clone();
+        let key_controller = gtk4::EventControllerKey::new();
+        key_controller.connect_key_pressed(move |_, keyval, _keycode, _state| {
+            // Close window on Escape
+            if keyval == gtk4::gdk::Key::Escape {
+                window_clone.close();
+                return gtk4::glib::signal::Propagation::Stop;
+            }
+            // Focus search bar on typing
+            if !search_entry.has_focus() {
+                if let Some(c) = keyval.to_unicode() {
+                    if !c.is_control() {
+                        search_entry.grab_focus();
+                        return gtk4::glib::signal::Propagation::Stop;
+                    }
+                }
+            }
+            gtk4::glib::signal::Propagation::Proceed
+        });
         window.add_controller(key_controller);
 
         let provider = style::setup_css();
