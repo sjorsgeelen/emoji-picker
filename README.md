@@ -5,6 +5,22 @@ The goal of this project is to (vibe)code a fast emoji-picker for GNOME. A commo
 
 I want the app to be focused on keyboard UX by making it superfast in start up, search and pasting. It should also get easily out of the way of the user. 
 
+
+## Roadmap / Backlog
+
+- [ ] Add a tab for recently used emoji
+	- Track emoji usage and display most recent in a dedicated tab or category
+- [ ] User-configurable settings
+	- Allow users to configure preferences (see below)
+- [ ] Light, dark, and system theme support
+	- Picker should follow system theme or allow user override
+- [ ] Configure locale-specific emoji matching
+	- User can select preferred language/locale for emoji search and keywords
+- [ ] Insert copied emoji directly at previous cursor position
+	- If picker is launched from a text field, insert emoji at the original cursor location
+- [ ] Package and easy installation
+	- Provide distribution packages (Flatpak, .deb, etc.) and simple install instructions
+
 Recently used emojis are suggested in a recently used category.
 
 The app should be able to follow (dark/light) system themes.
