@@ -160,7 +160,10 @@ mod tests {
             .filtered_emojis
             .iter()
             .all(|e| e.name_en.contains("smile")
-                || e.keywords_en.iter().any(|k| k.contains("smile"))));
+                || e.keywords_en.iter().any(|k| k.contains("smile"))
+                || e.name_nl.contains("smile")
+                || e.keywords_nl.iter().any(|k| k.contains("smile"))
+                || e.ch.contains("smile")));
     }
 
     #[test]

@@ -1,4 +1,6 @@
 {
+    "name": "Emoji Picker",
+    "version": "0.0.1",
     "app-id": "nl.dibitat.emoji_picker",
     "runtime": "org.gnome.Platform",
     "runtime-version": "49",
@@ -11,7 +13,9 @@
         "--socket=wayland",
         "--device=dri",
         "--filesystem=host",
-        "--env=RUST_BACKTRACE=1"
+        "--env=RUST_BACKTRACE=1",
+        "--talk-name=org.freedesktop.DBus",
+        "--own-name=org.freedesktop.DBus"
     ],
     "build-options": {
         "append-path": "/usr/local/bin"
@@ -23,10 +27,11 @@
             "build-commands": [
                 "install -Dm755 target/release/emoji-picker /app/bin/emoji-picker",
                 "install -Dm644 packaging/emoji-picker.svg /app/share/icons/hicolor/scalable/apps/nl.dibitat.emoji_picker.svg",
-                "install -Dm644 packaging/emoji-picker.desktop /app/share/applications/nl.dibitat.emoji_picker.desktop"
+                "install -Dm644 packaging/emoji-picker.desktop /app/share/applications/nl.dibitat.emoji_picker.desktop",
+                "install -Dm644 packaging/nl.dibitat.emoji_picker.appdata.xml /app/share/metainfo/nl.dibitat.emoji_picker.appdata.xml"
             ],
             "sources": [
-                { "type": "dir", "path": "." }
+                { "type": "dir", "path": ".." }
             ]
         }
     ]

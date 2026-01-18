@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>nl.dibitat.emoji_picker</id>
+  <name>Emoji Picker</name>
+  <summary>Quickly search and copy emojis</summary>
+  <description>
+    <p>
+      Emoji Picker is a simple GTK4 application that lets you search, browse, and copy emojis to your clipboard. Perfect for fast emoji access in any workflow.
+    </p>
+  </description>
+  <developer_name>Dibitat</developer_name>
+  <url type="homepage">https://github.com/dibitat/emoji-picker</url>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <releases>
+    <release version="0.0.1" date="2026-01-18">
+      <description>
+        <p>Initial Flatpak release.</p>
+      </description>
+    </release>
+  </releases>
+</component>
