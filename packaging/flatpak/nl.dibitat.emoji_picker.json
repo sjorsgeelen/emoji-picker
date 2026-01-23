@@ -1,0 +1,35 @@
+{
+    "app-id": "nl.dibitat.emoji_picker",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "49",
+    "sdk": "org.gnome.Sdk",
+    "command": "emoji-picker",
+    "finish-args": [
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--talk-name=org.freedesktop.portal.Desktop"
+    ],
+    "build-options": {
+        "append-path": "/usr/local/bin"
+    },
+    "modules": [
+        {
+            "name": "emoji-picker",
+            "buildsystem": "simple",
+            "build-commands": [
+                "install -Dm755 emoji-picker /app/bin/emoji-picker",
+                "install -Dm644 emoji-picker.svg /app/share/icons/hicolor/scalable/apps/nl.dibitat.emoji_picker.svg",
+                "install -Dm644 emoji-picker.desktop /app/share/applications/nl.dibitat.emoji_picker.desktop",
+                "install -Dm644 nl.dibitat.emoji_picker.metainfo.xml /app/share/metainfo/nl.dibitat.emoji_picker.metainfo.xml",
+                "install -Dm644 style.css /app/share/emoji-picker/style.css"
+            ],
+            "sources": [
+                { "type": "file", "path": "emoji-picker" },
+                { "type": "file", "path": "emoji-picker.desktop" },
+                { "type": "file", "path": "emoji-picker.svg" },
+                { "type": "file", "path": "nl.dibitat.emoji_picker.metainfo.xml" },
+                { "type": "file", "path": "style.css" }
+            ]
+        }
+    ]
+}

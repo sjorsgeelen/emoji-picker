@@ -126,7 +126,7 @@ dependencies = [
 
 [[package]]
 name = "emoji-picker"
-version = "0.1.0"
+version = "0.0.0"
 dependencies = [
  "env_logger",
  "glib 0.18.5",

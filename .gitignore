@@ -26,6 +26,9 @@ data/downloaded/*
 # Rust build artifacts
 /target/
 
+# Build dir
+.build/
+
 # Flatpak build artifacts
 /build-dir/
 /repo/
