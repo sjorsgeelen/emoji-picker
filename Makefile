@@ -9,7 +9,7 @@ TARGET = $(CURDIR)/target/release/emoji-picker
 BUILD_DIR = $(CURDIR)/.build
 FLATPAK_STAGE = $(BUILD_DIR)/flatpak
 FLATPAK_MANIFEST = packaging/flatpak/nl.dibitat.emoji_picker.json
-FLATPAK_METAINFO = packaging/flatpak/nl.dibitat.emoji_picker.metainfo.xml
+FLATPAK_METAINFO = packaging/nl.dibitat.emoji_picker.metainfo.xml
 RPM_SPEC = packaging/rpm/emoji-picker.spec
 
 .PHONY: all build test clean flatpak rpm version-inject bundle dist
@@ -38,7 +38,7 @@ flatpak-package:
 	cp $(TARGET) $(FLATPAK_STAGE)/emoji-picker
 	cp packaging/emoji-picker.desktop $(FLATPAK_STAGE)/emoji-picker.desktop
 	cp packaging/emoji-picker.svg $(FLATPAK_STAGE)/emoji-picker.svg
-	cp packaging/flatpak/nl.dibitat.emoji_picker.metainfo.xml $(FLATPAK_STAGE)/nl.dibitat.emoji_picker.metainfo.xml
+	cp packaging/nl.dibitat.emoji_picker.metainfo.xml $(FLATPAK_STAGE)/nl.dibitat.emoji_picker.metainfo.xml
 	cp data/style.css $(FLATPAK_STAGE)/style.css
 	cp packaging/flatpak/nl.dibitat.emoji_picker.json $(FLATPAK_STAGE)/nl.dibitat.emoji_picker.json
 	@echo "Injecting version $(VERSION) into staged manifests..."

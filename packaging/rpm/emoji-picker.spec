@@ -34,9 +34,7 @@ install -d %{buildroot}%{_datadir}/applications
 install -m 0644 ../../.build/flatpak/emoji-picker.desktop %{buildroot}%{_datadir}/applications/emoji-picker.desktop
 
 install -d %{buildroot}%{_datadir}/metainfo
-if [ -f ../../.build/flatpak/nl.dibitat.emoji_picker.appdata.xml ]; then \
-  install -m 0644 ../../.build/flatpak/nl.dibitat.emoji_picker.appdata.xml %{buildroot}%{_datadir}/metainfo/; \
-fi
+install -m 0644 ../../.build/flatpak/nl.dibitat.emoji_picker.metainfo.xml %{buildroot}%{_datadir}/metainfo/nl.dibitat.emoji_picker.metainfo.xml
 
 # install main svg icon
 install -d %{buildroot}%{_datadir}/icons/hicolor/scalable/apps

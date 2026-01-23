@@ -27,7 +27,7 @@
                 { "type": "file", "path": "emoji-picker" },
                 { "type": "file", "path": "emoji-picker.desktop" },
                 { "type": "file", "path": "emoji-picker.svg" },
-                { "type": "file", "path": "nl.dibitat.emoji_picker.metainfo.xml" },
+                { "type": "file", "path": "../nl.dibitat.emoji_picker.metainfo.xml" },
                 { "type": "file", "path": "style.css" }
             ]
         }
